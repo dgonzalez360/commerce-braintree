@@ -16,6 +16,7 @@ use webdna\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use webdna\commerce\braintree\assetbundles\hostedfields\HostedFieldsAsset;
 use webdna\commerce\braintree\assetbundles\expresscheckout\GooglePayAsset;
 use webdna\commerce\braintree\assetbundles\expresscheckout\ApplePayAsset;
+use webdna\commerce\braintree\assetbundles\ach\ACHAsset;
 use webdna\commerce\braintree\models\Payment;
 use webdna\commerce\braintree\models\CancelSubscription;
 use webdna\commerce\braintree\models\Plan;
@@ -92,7 +93,7 @@ class Gateway extends BaseGateway
 
 	private ?string $_googlePayMerchantId = null;
 
-	private ?Braintree\Gateway $gateway = null;
+	public ?Braintree\Gateway $gateway = null;
 
 	private ?Braintree\Customer $customer = null;
 	
@@ -265,6 +266,7 @@ class Gateway extends BaseGateway
 			$params['merchantAccountId'] = $this->getMerchantAccountId($currency);
 		}
 		if ($user) {
+			
 			try {
 				$customer = $this->getCustomer($user);
 			} catch (\Braintree_Exception_NotFound $e) {
@@ -273,14 +275,19 @@ class Gateway extends BaseGateway
 
 			if (!$customer) {
 				$customer = $this->gateway->customer()->create([
-					'id' => $user->uid,
-					'firstName' => $user->firstName,
-					'lastName' => $user->lastName,
+					//'id' => $user->uid,
+					'firstName' => $user->fullName,
+					'lastName' => $user->fullName,
 					'email' => $user->email,
+					'company' => $user->plexCustomerNo
 				]);
+				
 			}
-			$params['customerId'] = $user->uid;
+			//$params['customerId'] = $user->uid;
+			$params['customerId'] = $customer->id;
+			
 		}
+
 		$token = $this->gateway->clientToken($params)->generate($params);
 
 		return $token;
@@ -310,13 +317,26 @@ class Gateway extends BaseGateway
 
 	public function getCustomer($user): ?Braintree\Customer
 	{
+		
 		if (!$this->customer) {
+			
 			try {
-				$this->customer = $this->gateway->customer()->find($user->uid);
+
+				$collection = $this->gateway->customer()->search([
+					Braintree\CustomerSearch::company()->is($user->plexCustomerNo)
+				]);
+
+				foreach($collection as $customer) {
+					$this->customer = $customer;
+					break;
+				}
+				
 			} catch (\Throwable $exception) {
+				//Craft::dd($exception);
 				return null;
 			}
 		}
+
 		return $this->customer;
 	}
 
@@ -335,8 +355,11 @@ class Gateway extends BaseGateway
 		//Craft::dd($sourceData->nonce);
 		//BT::log('Create payment method: ' . $order->id);
 
+		$customer = $this->getCustomer($user);
+
 		return (object) $this->gateway->paymentMethod()->create([
-			'customerId' => $user->uid,
+			//'customerId' => $user->uid,
+			'customerId' => $customer != null ? $customer->id : $user->uid,
 			'paymentMethodNonce' => $sourceData->nonce,
 			'options' => [
 				'makeDefault' => (bool) $sourceData->default,
@@ -363,8 +386,8 @@ class Gateway extends BaseGateway
 			];
 
 			if ($order->customer) {
-				if ($this->getCustomer($order->customer)) {
-					$data['customerId'] = $order->customer->uid;
+				if ($customer = $this->getCustomer($order->customer)) {
+					$data['customerId'] = $customer != null ? $customer->id : $order->customer->uid;
 				} else {
 					$data['customer'] = [
 						'firstName' => $order->customer->firstName,
@@ -495,8 +518,8 @@ class Gateway extends BaseGateway
 			];
 
 			if ($order->customer) {
-				if ($this->getCustomer($order->customer)) {
-					$data['customerId'] = $order->customer->uid;
+				if ($customer = $this->getCustomer($order->customer)) {
+					$data['customerId'] = $customer != null ? $customer->id : $order->customer->uid;
 				} else {
 					$data['customer'] = [
 						'firstName' => $order->customer->firstName,
@@ -1104,6 +1127,66 @@ class Gateway extends BaseGateway
 		}
 		
 		$html = $view->renderTemplate('commerce-braintree/paymentForms/express-checkout', $params);
+	
+		$view->setTemplateMode($previousMode);
+	
+		return TemplateHelper::raw($html);
+	}
+
+	public function getACHCheckoutHtml(array $params = []): string
+	{
+		$request = Craft::$app->getRequest();
+	
+		$params = array_merge(
+			[
+				'gateway' => $this,
+				'paymentForm' => $this->getPaymentFormModel(),
+				'testMode' => $this->getTestMode(),
+			],
+			$params
+		);
+	
+		$orderId = $request->getParam('number');
+		if ($orderId) {
+			$order = Commerce::getInstance()->getOrders()->getOrderByNumber($orderId);
+		} else {
+			$order = Commerce::getInstance()->getCarts()->getCart();
+		}
+		$params['order'] = $order;
+
+		/*	
+			Get available Accounts
+		*/
+
+		$user = Craft::$app->getUser()->getIdentity();
+        $customer = $this->getCustomer($user);
+
+        $braintreeCustomer = $this->gateway->customer()->find($customer->id);
+        $paymentMethods = $customer->paymentMethods;
+        $accounts = [];
+        if($paymentMethods){
+            foreach ($paymentMethods as $paymentMethod ) { 
+                if(get_class($paymentMethod) == 'Braintree\UsBankAccount'){
+                    $accounts[] = [
+                        'account' => $paymentMethod->last4,
+                        'accountType' => $paymentMethod->accountType,
+                        'bankName' => $paymentMethod->bankName,
+                        'token' => $paymentMethod->token
+                    ];
+                }
+            }
+			$params['accounts'] = $accounts;
+        }
+
+		$view = Craft::$app->getView();
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		
+		$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/client.min.js");
+		$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/us-bank-account.min.js");
+		$view->registerAssetBundle(ACHAsset::class);
+		
+		$html = $view->renderTemplate('commerce-braintree/paymentForms/ach-payment', $params);
 	
 		$view->setTemplateMode($previousMode);
 	

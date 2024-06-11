@@ -1,0 +1,139 @@
+
+<div class="p-3 u-bg-silver rounded border">
+    {% if accounts %}
+    <div id="select-ach-container" class="row c-form--addresses">
+        <div class="col-md-6 mb-3">
+            <label for="account-type" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Existing Accounts</label>
+            <select name="saved-account" id="saved-account" class="form-select">
+                <option value="--" selected>Select Account</option>
+                {% for account in accounts %}
+                    <option value="{{account.token}}">{{account.account}} ({{account.bankName}}/{{account.accountType}})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="d-flex w-100 justify-content-end">
+            <button id="add-new-account" class="btn btn-tertiary c-cart__btn me-3">Add new account</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="new-ach-container" class="row c-form--addresses {% if accounts is not empty %}d-none{% endif %}">
+        <p class="c-cart__checkout-step-heading text-uppercase">New account</p>
+
+        <div class="col-md-6 mb-3">
+            <label for="account-number" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Account Number</label>
+            <input type="text" class="form-control" id="account-number" placeholder="Account Number" value="1000000001"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="routing-number" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Routing Number</label>
+            <input type="text" class="form-control" id="routing-number" placeholder="Routing Number" value="011000015"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="account-type" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Account Type</label>
+            <select name="account-type" id="account-type" class="form-select">
+                <option value="checking" selected>Checking</option>
+                <option value="savings" selected>Savings</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="ownership-type" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Ownership</label>
+            <select name="ownership-type" class="form-select" id="ownership-type">
+                <option value="personal" selected>Personal</option>
+                <option value="business">Business</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="first-name" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">First name</label>
+            <input type="text" id="first-name" class="form-control" placeholder="First Name" value="David"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="last-name" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Last Name</label>
+            <input type="text" id="last-name" class="form-control" placeholder="Last Name" value="Test"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="business-name" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Business Name</label>
+            <input type="text" id="business-name" class="form-control" placeholder="Business Name"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="billing-street-address" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Billing Street Address</label>
+            <input type="text" id="billing-street-address" class="form-control" placeholder="Billing Street Address"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="billing-extended-address" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Billing Street2 Address</label>
+            <input type="text" id="billing-extended-address" class="form-control" placeholder="Billing Extended Address"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="billing-locality" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Billing Locally</label>
+            <input type="text" id="billing-locality" class="form-control" placeholder="Billing locality"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="billing-region" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Billing State</label>
+            <select name="billing-region" class="form-select" id="billing-region">
+                <option value="AL">Alabama</option>
+                <option value="AK">Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="AR">Arkansas</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="CT">Connecticut</option>
+                <option value="DE">Delaware</option>
+                <option value="DC">District Of Columbia</option>
+                <option value="FL">Florida</option>
+                <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="billing-postal-code" class="form-label mb-0" style="font-weight:400; font-size:0.8em;">Billing Postal Code</label>
+            <input type="text" id="billing-postal-code" class="form-control" placeholder="Billing Postal Code" value="33328"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <button id="validate-account" class="btn btn-primary c-cart__btn me-3">Validate Account</button>
+        </div>
+    </div>
+
+    <input type="hidden" name="gatewayToken" id="gatewayToken" value="{{ gateway.getToken(currentUser ? currentUser : null, order.paymentCurrency) }}" />
+    <input type="hidden" name="token" id="token" value="" />
+    <input type="hidden" name="amount" value="{{ order.outstandingBalance }}" />
+    <input type="hidden" name="currency" value="{{ order.paymentCurrency }}">
+    <input type="hidden" name="email" value="{{ order.email }}">
+</div>
